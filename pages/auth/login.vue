@@ -20,13 +20,14 @@
     <UForm
       :schema="schema"
       :state="state"
-      class="gap-6 flex flex-col"
+      class="flex flex-col"
       @submit="onSubmit"
     >
       <UFormField label="Email or Username" name="email">
         <UInput
+          class="mb-4"
           v-model="state.email"
-          placeholder="Enter your email or username"
+          placeholder="Enter your email "
           icon="i-lucide-mail"
           size="lg"
           :disabled="isLoading"
@@ -35,6 +36,7 @@
 
       <UFormField label="Password" name="password">
         <UInput
+          class="mb-4"
           v-model="state.password"
           type="password"
           placeholder="Enter your password"
@@ -77,9 +79,7 @@ import * as v from "valibot"
 
 definePageMeta({
   layout: "auth",
-  auth: {
-    guestOnly: true,
-  },
+  middleware: "guest",
 })
 
 useHead({
@@ -121,8 +121,7 @@ async function onSubmit(event: { data: Schema }) {
   } else {
     toast.add({
       title: "Sign In Failed",
-      description:
-        result.error || "Invalid email or password. Please try again.",
+      description: result.error || "Invalid email. Please try again.",
       color: "red",
     })
   }

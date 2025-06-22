@@ -4,31 +4,43 @@
     <header class="bg-white dark:bg-gray-900 border-b">
       <div class="container mx-auto px-4">
         <div class="flex items-center justify-between h-16">
-          <NuxtLink to="/" class="flex items-center space-x-2">
-            <UIcon name="i-lucide-headphones" class="w-8 h-8 text-primary" />
+          <div>
+            <UIcon
+              name="i-lucide-headphones"
+              class="w-8 h-8 mr-1 text-primary translate-y-1"
+            />
             <span class="font-bold text-xl text-gray-900 dark:text-white"
               >Vocali</span
             >
-          </NuxtLink>
+          </div>
 
           <div class="flex items-center space-x-4">
             <!-- Theme Toggle -->
-            <UButton
-              variant="ghost"
-              size="sm"
-              square
-              @click="
-                $colorMode.preference =
-                  $colorMode.value === 'dark' ? 'light' : 'dark'
-              "
-            >
-              <UIcon
-                :name="
-                  $colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'
+            <ClientOnly>
+              <UButton
+                variant="ghost"
+                size="sm"
+                square
+                @click="
+                  $colorMode.preference =
+                    $colorMode.value === 'dark' ? 'light' : 'dark'
                 "
-                class="w-4 h-4"
-              />
-            </UButton>
+              >
+                <UIcon
+                  :name="
+                    $colorMode.value === 'dark'
+                      ? 'i-lucide-sun'
+                      : 'i-lucide-moon'
+                  "
+                  class="w-4 h-4"
+                />
+              </UButton>
+              <template #fallback>
+                <UButton variant="ghost" size="sm" square>
+                  <UIcon name="i-lucide-moon" class="w-4 h-4" />
+                </UButton>
+              </template>
+            </ClientOnly>
 
             <!-- Navigation Links -->
             <div

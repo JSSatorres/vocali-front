@@ -13,7 +13,7 @@
       </p>
 
       <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <UButton size="lg" to="/">
+        <UButton size="lg" to="/dashboard">
           <UIcon name="i-lucide-home" class="w-4 h-4 mr-2" />
           Go Home
         </UButton>

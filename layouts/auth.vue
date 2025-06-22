@@ -5,12 +5,15 @@
     <div class="absolute top-0 left-0 right-0 z-10">
       <div class="container mx-auto px-4 py-6">
         <div class="flex items-center justify-between">
-          <NuxtLink to="/" class="flex items-center space-x-2">
-            <UIcon name="i-lucide-headphones" class="w-8 h-8 text-primary" />
+          <div>
+            <UIcon
+              name="i-lucide-headphones"
+              class="w-8 h-8 text-primary mr-1 translate-y-1"
+            />
             <span class="font-bold text-xl text-gray-900 dark:text-white"
               >Vocali</span
             >
-          </NuxtLink>
+          </div>
 
           <div>
             <UButton

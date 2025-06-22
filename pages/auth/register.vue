@@ -21,6 +21,7 @@
     <UForm :schema="schema" :state="state" class="space-y-6" @submit="onSubmit">
       <UFormField label="Full Name" name="name">
         <UInput
+          class="mb-4"
           v-model="state.name"
           placeholder="Enter your full name"
           icon="i-lucide-user"
@@ -31,6 +32,7 @@
 
       <UFormField label="Email" name="email">
         <UInput
+          class="mb-4"
           v-model="state.email"
           type="email"
           placeholder="Enter your email"
@@ -103,9 +105,7 @@ import * as v from "valibot"
 // Middleware para usuarios no autenticados
 definePageMeta({
   layout: "auth",
-  auth: {
-    guestOnly: true,
-  },
+  middleware: "guest",
 })
 
 // Meta tags

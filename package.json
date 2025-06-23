@@ -9,7 +9,10 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "type-check": "nuxt typecheck",
-    "lint": "vue-tsc --noEmit"
+    "lint": "vue-tsc --noEmit",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage"
   },
   "dependencies": {
     "@aws-amplify/auth": "^6.13.1",
@@ -31,6 +34,14 @@
   },
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.51",
-    "@nuxtjs/tailwindcss": "^6.13.1"
+    "@nuxt/test-utils": "^3.19.1",
+    "@nuxtjs/tailwindcss": "^6.13.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/user-event": "^14.6.1",
+    "@testing-library/vue": "^8.1.0",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^18.0.1",
+    "vitest": "^3.2.4"
   }
 }

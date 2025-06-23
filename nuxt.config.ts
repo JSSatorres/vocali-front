@@ -15,7 +15,12 @@ export default defineNuxtConfig({
   // CSS Configuration
   css: ["~/assets/css/main.css"],
 
-  modules: ["@nuxt/ui", "@nuxtjs/tailwindcss"],
+  modules: [
+    "@nuxt/ui",
+    "@nuxtjs/tailwindcss",
+    "@pinia/nuxt",
+    "@nuxt/test-utils/module",
+  ],
 
   // Configuración de runtime
   runtimeConfig: {

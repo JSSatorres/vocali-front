@@ -117,7 +117,7 @@ const tabs = [
 ]
 
 useHead({
-  title: "Dashboard - Vocali",
+  title: "Dashboard - Vocali-dev",
   meta: [
     {
       name: "description",

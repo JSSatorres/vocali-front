@@ -110,7 +110,7 @@ definePageMeta({
 
 // Meta tags
 useHead({
-  title: "Sign Up - Vocali",
+  title: "Sign Up - Vocali-dev",
   meta: [
     {
       name: "description",

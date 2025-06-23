@@ -30,7 +30,10 @@
                 <UIcon name="i-lucide-clock" class="w-3 h-3" />
                 {{ transcription.duration }}
               </span>
-              <span class="flex items-center gap-1">
+              <span
+                v-if="transcription.language"
+                class="flex items-center gap-1"
+              >
                 <UIcon name="i-lucide-globe" class="w-3 h-3" />
                 {{ transcription.language }}
               </span>
@@ -54,21 +57,34 @@
 
         <!-- Transcription Preview -->
         <div
-          v-if="transcription.text && transcription.status === 'completed'"
+          v-if="
+            transcription.transcriptionText &&
+            transcription.status === 'completed'
+          "
           class="mb-3"
         >
           <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-            {{ transcription.text }}
+            {{ transcription.transcriptionText }}
           </p>
         </div>
 
         <!-- Processing Message -->
-        <div v-else-if="transcription.status === 'processing'" class="mb-3">
+        <div
+          v-else-if="
+            transcription.status === 'processing' ||
+            transcription.status === 'pending'
+          "
+          class="mb-3"
+        >
           <div
             class="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400"
           >
             <UIcon name="i-lucide-loader" class="w-4 h-4 animate-spin" />
-            <span>Processing transcription...</span>
+            <span>{{
+              transcription.status === "pending"
+                ? "Queued for processing..."
+                : "Processing transcription..."
+            }}</span>
           </div>
         </div>
 
@@ -119,16 +135,7 @@
 </template>
 
 <script setup lang="ts">
-interface Transcription {
-  id: string
-  filename: string
-  duration: string
-  language: string
-  status: "completed" | "processing" | "failed"
-  createdAt: string
-  text: string
-  fileSize: string
-}
+import type { Transcription } from "~/types/transcription"
 
 interface Props {
   transcription: Transcription
@@ -146,6 +153,7 @@ const getIcon = (status: string) => {
     case "completed":
       return "i-lucide-file-text"
     case "processing":
+    case "pending":
       return "i-lucide-loader"
     case "failed":
       return "i-lucide-alert-circle"
@@ -159,6 +167,7 @@ const getIconColor = (status: string) => {
     case "completed":
       return "text-green-500"
     case "processing":
+    case "pending":
       return "text-amber-500"
     case "failed":
       return "text-red-500"
@@ -172,6 +181,7 @@ const getIconBackground = (status: string) => {
     case "completed":
       return "bg-green-100 dark:bg-green-900/20"
     case "processing":
+    case "pending":
       return "bg-amber-100 dark:bg-amber-900/20"
     case "failed":
       return "bg-red-100 dark:bg-red-900/20"
@@ -185,6 +195,7 @@ const getStatusColor = (status: string) => {
     case "completed":
       return "green"
     case "processing":
+    case "pending":
       return "amber"
     case "failed":
       return "red"

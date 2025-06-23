@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <!-- Recording Controls -->
-    <UCard>
+    <UCard v-if="!recordedAudioUrl">
       <div class="text-center p-8">
         <div
           class="mx-auto h-24 mb-6 rounded-full flex items-center justify-center transition-colors"
@@ -58,14 +58,25 @@
 
           <template v-else>
             <UButton
+              v-if="!isPaused"
               @click="pauseRecording"
               variant="outline"
               size="lg"
-              :disabled="isPaused"
               data-cy="pause-button"
             >
               <UIcon name="i-lucide-pause" class="w-5 h-5 mr-2" />
               Pause
+            </UButton>
+
+            <UButton
+              v-if="isPaused"
+              @click="resumeRecording"
+              variant="outline"
+              size="lg"
+              data-cy="resume-button"
+            >
+              <UIcon name="i-lucide-play" class="w-5 h-5 mr-2" />
+              Resume
             </UButton>
 
             <UButton
@@ -97,8 +108,46 @@
       </div>
     </UCard>
 
+    <!-- Recording Review -->
+    <UCard v-if="recordedAudioUrl && !isUploading">
+      <template #header>
+        <h3 class="text-lg font-semibold">Review Recording</h3>
+      </template>
+      <div class="space-y-4 p-4">
+        <audio controls :src="recordedAudioUrl" class="w-full"></audio>
+        <div class="flex justify-end gap-3 mt-4">
+          <UButton @click="handleUpload" data-cy="upload-recording-button">
+            <UIcon name="i-lucide-upload" class="w-5 h-5 mr-2" />
+            Upload
+          </UButton>
+          <UButton
+            @click="discardRecording"
+            variant="outline"
+            color="red"
+            data-cy="discard-recording-button"
+          >
+            <UIcon name="i-lucide-trash-2" class="w-5 h-5 mr-2" />
+            Discard
+          </UButton>
+        </div>
+      </div>
+    </UCard>
+
+    <!-- Upload Progress -->
+    <UCard v-if="isUploading" class="w-full">
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold">Processing Recording...</h3>
+        </div>
+        <UProgress animation="carousel" data-cy="upload-progress" />
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Uploading your recording. This may take a few moments...
+        </p>
+      </div>
+    </UCard>
+
     <!-- Live Transcription -->
-    <UCard v-if="isRecording || transcriptionText">
+    <UCard v-if="isRecording || (transcriptionText && !recordedAudioUrl)">
       <template #header>
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-semibold">Live Transcription</h3>
@@ -124,71 +173,17 @@
           </div>
         </div>
       </template>
-
-      <div class="min-h-[200px] max-h-[400px] overflow-y-auto">
-        <div
-          v-if="!transcriptionText && isRecording"
-          class="flex items-center justify-center h-32 text-gray-500"
-        >
-          <div class="text-center">
-            <UIcon
-              name="i-lucide-loader"
-              class="w-6 h-6 animate-spin mx-auto mb-2"
-            />
-            <p class="text-sm">Listening...</p>
-          </div>
-        </div>
-
-        <div v-else-if="transcriptionText" class="space-y-2">
-          <p
-            class="text-gray-900 dark:text-white leading-relaxed whitespace-pre-wrap"
-            data-cy="transcription-text"
-          >
-            {{ transcriptionText }}
-          </p>
-
-          <div
-            v-if="isRecording"
-            class="flex items-center gap-2 text-sm text-gray-500"
-          >
-            <div class="w-1 h-4 bg-blue-500 animate-pulse"></div>
-            <span>Transcribing...</span>
-          </div>
-        </div>
-
-        <div v-else class="flex items-center justify-center h-32 text-gray-500">
-          <p class="text-sm">Start recording to see live transcription</p>
-        </div>
-      </div>
-    </UCard>
-
-    <!-- Audio Visualizer -->
-    <UCard v-if="isRecording">
-      <template #header>
-        <h3 class="text-lg font-semibold">Audio Level</h3>
-      </template>
-
-      <div class="p-4">
-        <div
-          class="flex items-center justify-center h-16 bg-gray-100 dark:bg-gray-800 rounded-lg"
-        >
-          <div class="flex items-end justify-center gap-1 h-12">
-            <div
-              v-for="i in 20"
-              :key="i"
-              class="w-2 bg-blue-500 rounded-t transition-all duration-100"
-              :style="{ height: `${Math.random() * 100}%` }"
-              :class="isRecording ? 'animate-pulse' : ''"
-            ></div>
-          </div>
-        </div>
-      </div>
     </UCard>
   </div>
 </template>
 
 <script setup lang="ts">
-import { markRaw } from "vue"
+import { storeToRefs } from "pinia"
+import { useTranscriptionStore } from "~/stores/transcription"
+
+const store = useTranscriptionStore()
+const { isUploading, error } = storeToRefs(store)
+const { uploadTranscription } = store
 
 const isRecording = ref(false)
 const isPaused = ref(false)
@@ -196,23 +191,15 @@ const hasPermission = ref(false)
 const showPermissionWarning = ref(false)
 const recordingTime = ref(0)
 const transcriptionText = ref("")
+const audioChunks = ref<Blob[]>([])
+const recordedAudioUrl = ref<string | null>(null)
+const recordedAudioFile = ref<File | null>(null)
 
 const settings = ref({
-  language: "auto",
   quality: "high",
   realTimeTranscription: true,
   enablePunctuation: true,
 })
-
-const languageOptions = markRaw([
-  { label: "Auto-detect", value: "auto" },
-  { label: "English", value: "en" },
-  { label: "Spanish", value: "es" },
-  { label: "French", value: "fr" },
-  { label: "German", value: "de" },
-  { label: "Italian", value: "it" },
-  { label: "Portuguese", value: "pt" },
-])
 
 const qualityOptions = markRaw([
   { label: "High Quality", value: "high" },
@@ -238,22 +225,32 @@ const startRecording = async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
     mediaRecorder = new MediaRecorder(stream)
+    audioChunks.value = []
+
+    mediaRecorder.ondataavailable = (event) => {
+      audioChunks.value.push(event.data)
+    }
+
+    mediaRecorder.onstop = () => {
+      const audioBlob = new Blob(audioChunks.value, { type: "audio/webm" })
+      recordedAudioFile.value = new File(
+        [audioBlob],
+        `real-time-recording-${new Date().toISOString()}.webm`,
+        { type: "audio/webm" }
+      )
+      recordedAudioUrl.value = URL.createObjectURL(audioBlob)
+      audioChunks.value = []
+    }
 
     isRecording.value = true
     recordingTime.value = 0
     transcriptionText.value = ""
 
-    // Start recording timer
     recordingInterval = setInterval(() => {
       recordingTime.value++
     }, 1000)
 
-    // Simulate live transcription
-    simulateLiveTranscription()
-
-    if (mediaRecorder) {
-      mediaRecorder.start()
-    }
+    mediaRecorder.start()
   } catch (error) {
     console.error("Error starting recording:", error)
     hasPermission.value = false
@@ -268,6 +265,16 @@ const pauseRecording = () => {
     if (recordingInterval) {
       clearInterval(recordingInterval)
     }
+  }
+}
+
+const resumeRecording = () => {
+  if (mediaRecorder && isPaused.value) {
+    mediaRecorder.resume()
+    isPaused.value = false
+    recordingInterval = setInterval(() => {
+      recordingTime.value++
+    }, 1000)
   }
 }
 
@@ -286,33 +293,42 @@ const stopRecording = () => {
     clearInterval(recordingInterval)
     recordingInterval = null
   }
-
-  useToast().add({
-    title: "Recording Saved",
-    description: "Your transcription has been saved to history.",
-  })
 }
 
-const simulateLiveTranscription = () => {
-  const sampleTexts = [
-    "Hello, this is a sample transcription.",
-    "The weather is nice today.",
-    "I am testing the real-time transcription feature.",
-    "This text appears as you speak.",
-    "You can see the words appearing in real-time.",
-  ]
+const handleUpload = async () => {
+  if (!recordedAudioFile.value) return
 
-  let textIndex = 0
-  const interval = setInterval(() => {
-    if (!isRecording.value || textIndex >= sampleTexts.length) {
-      clearInterval(interval)
-      return
-    }
+  const formData = new FormData()
+  formData.append("file", recordedAudioFile.value)
+  formData.append("settings", JSON.stringify(settings.value))
 
-    transcriptionText.value +=
-      (transcriptionText.value ? " " : "") + sampleTexts[textIndex]
-    textIndex++
-  }, 3000)
+  // Pass File to the store action
+  await uploadTranscription(recordedAudioFile.value, { pepe: "2sdsad" })
+
+  if (!error.value) {
+    useToast().add({
+      title: "Recording Uploaded",
+      description:
+        "Your recording is being processed and will appear in History.",
+    })
+  } else {
+    useToast().add({
+      title: "Upload Failed",
+      description: error.value || "An unknown error occurred.",
+      color: "red",
+    })
+  }
+  discardRecording() // Reset state after upload
+}
+
+const discardRecording = () => {
+  if (recordedAudioUrl.value) {
+    URL.revokeObjectURL(recordedAudioUrl.value)
+  }
+  recordedAudioUrl.value = null
+  recordedAudioFile.value = null
+  transcriptionText.value = ""
+  recordingTime.value = 0
 }
 
 const formatTime = (seconds: number) => {

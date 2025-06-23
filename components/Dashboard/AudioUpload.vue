@@ -73,55 +73,12 @@
       <div class="space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-semibold">Processing...</h3>
-          <span class="text-sm text-gray-600">{{ uploadProgress }}%</span>
         </div>
-        <UProgress :value="uploadProgress" data-cy="upload-progress" />
+        <UProgress animation="carousel" data-cy="upload-progress" />
         <p class="text-sm text-gray-600 dark:text-gray-400">
-          Uploading and transcribing your audio file...
+          Uploading and transcribing your audio file. This may take a few
+          moments...
         </p>
-      </div>
-    </UCard>
-
-    <!-- Upload Settings -->
-    <UCard v-if="selectedFile" class="w-full">
-      <template #header>
-        <h3 class="text-lg font-semibold">Transcription Settings</h3>
-      </template>
-
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium mb-2">Language</label>
-          <USelect
-            v-model="settings.language"
-            :options="languageOptions"
-            data-cy="language-select"
-          />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium mb-2">Quality</label>
-          <USelect
-            v-model="settings.quality"
-            :options="qualityOptions"
-            data-cy="quality-select"
-          />
-        </div>
-
-        <div class="flex items-center gap-2">
-          <UCheckbox
-            v-model="settings.enableTimestamps"
-            data-cy="timestamps-checkbox"
-          />
-          <label class="text-sm">Include timestamps</label>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <UCheckbox
-            v-model="settings.enableSpeakerLabels"
-            data-cy="speaker-labels-checkbox"
-          />
-          <label class="text-sm">Identify speakers</label>
-        </div>
       </div>
     </UCard>
 
@@ -142,36 +99,22 @@
 </template>
 
 <script setup lang="ts">
-import { markRaw } from "vue"
+import { storeToRefs } from "pinia"
+import { useTranscriptionStore } from "~/stores/transcription"
+
+const store = useTranscriptionStore()
+const { isUploading, error } = storeToRefs(store)
+const { uploadTranscription } = store
 
 const dragover = ref(false)
 const selectedFile = ref<File | null>(null)
-const isUploading = ref(false)
-const uploadProgress = ref(0)
 const fileInput = ref<HTMLInputElement>()
 
 const settings = ref({
-  language: "auto",
   quality: "high",
   enableTimestamps: true,
   enableSpeakerLabels: false,
 })
-
-const languageOptions = markRaw([
-  { label: "Auto-detect", value: "auto" },
-  { label: "English", value: "en" },
-  { label: "Spanish", value: "es" },
-  { label: "French", value: "fr" },
-  { label: "German", value: "de" },
-  { label: "Italian", value: "it" },
-  { label: "Portuguese", value: "pt" },
-])
-
-const qualityOptions = markRaw([
-  { label: "High Quality", value: "high" },
-  { label: "Standard", value: "standard" },
-  { label: "Fast", value: "fast" },
-])
 
 const handleDrop = (event: DragEvent) => {
   dragover.value = false
@@ -199,31 +142,27 @@ const formatFileSize = (bytes: number) => {
 const startTranscription = async () => {
   if (!selectedFile.value) return
 
-  isUploading.value = true
-  uploadProgress.value = 0
+  await uploadTranscription(selectedFile.value, settings.value)
 
-  // Simulate upload progress
-  const interval = setInterval(() => {
-    uploadProgress.value += Math.random() * 10
-    if (uploadProgress.value >= 100) {
-      uploadProgress.value = 100
-      clearInterval(interval)
-      setTimeout(() => {
-        isUploading.value = false
-        // TODO: Handle successful transcription
-        useToast().add({
-          title: "Success",
-          description: "Transcription completed successfully!",
-        })
-        reset()
-      }, 1000)
-    }
-  }, 500)
+  if (!error.value) {
+    useToast().add({
+      title: "Upload Successful",
+      description: "Your file is now being processed.",
+    })
+    reset()
+  } else {
+    useToast().add({
+      title: "Upload Failed",
+      description: error.value || "An unknown error occurred.",
+      color: "red",
+    })
+  }
 }
 
 const reset = () => {
   selectedFile.value = null
-  isUploading.value = false
-  uploadProgress.value = 0
+  if (fileInput.value) {
+    fileInput.value.value = ""
+  }
 }
 </script>

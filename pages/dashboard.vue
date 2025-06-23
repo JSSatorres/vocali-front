@@ -23,7 +23,9 @@
               <UIcon name="i-lucide-file-text" class="w-5 h-5 text-blue-500" />
             </div>
             <div>
-              <p class="text-2xl font-bold text-gray-900 dark:text-white">24</p>
+              <p class="text-2xl font-bold text-gray-900 dark:text-white">
+                {{ totalTranscriptions }}
+              </p>
               <p class="text-sm text-gray-600 dark:text-gray-400">
                 Total transcriptions
               </p>
@@ -40,7 +42,7 @@
             </div>
             <div>
               <p class="text-2xl font-bold text-gray-900 dark:text-white">
-                12.5h
+                {{ totalDuration }}
               </p>
               <p class="text-sm text-gray-600 dark:text-gray-400">Total time</p>
             </div>
@@ -75,6 +77,8 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from "pinia"
+import { useTranscriptionStore } from "~/stores/transcription"
 // Explicit imports for dashboard components
 import DashboardAudioUpload from "~/components/Dashboard/AudioUpload.vue"
 import DashboardRealTimeTranscription from "~/components/Dashboard/RealTimeTranscription.vue"
@@ -85,6 +89,12 @@ definePageMeta({
 })
 
 const { user } = useAuth()
+const transcriptionStore = useTranscriptionStore()
+const { totalTranscriptions, totalDuration } = storeToRefs(transcriptionStore)
+
+onMounted(() => {
+  transcriptionStore.fetchTranscriptions()
+})
 
 const activeTab = ref(0)
 

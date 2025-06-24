@@ -10,7 +10,7 @@
               class="w-8 h-8 mr-1 text-primary translate-y-1"
             />
             <span class="font-bold text-xl text-gray-900 dark:text-white"
-              >Vocali</span
+              >Vocali-dev</span
             >
           </div>
 

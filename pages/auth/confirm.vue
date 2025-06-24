@@ -87,7 +87,7 @@ definePageMeta({
 })
 
 useHead({
-  title: "Verify Email - Vocali",
+  title: "Verify Email - Vocali-dev",
   meta: [
     {
       name: "description",

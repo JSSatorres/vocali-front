@@ -83,7 +83,7 @@ definePageMeta({
 })
 
 useHead({
-  title: "Sign In - Vocali",
+  title: "Sign In - Vocali-dev",
   meta: [{ name: "description", content: "Sign in to your Vocali account" }],
 })
 

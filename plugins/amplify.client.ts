@@ -14,13 +14,13 @@ export default defineNuxtPlugin(() => {
             scopes: ["openid", "email", "profile"],
             redirectSignIn: [
               typeof window !== "undefined"
-                ? window.location.origin
-                : "http://localhost:3002",
+                ? `${window.location.origin}/dashboard`
+                : "https://tudominio.com/dashboard",
             ],
             redirectSignOut: [
               typeof window !== "undefined"
                 ? window.location.origin
-                : "http://localhost:3002",
+                : "http://localhost:3001",
             ],
             responseType: "code",
           },

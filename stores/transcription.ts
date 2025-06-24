@@ -5,6 +5,7 @@ import type {
 } from "~/types/transcription"
 
 const API_BASE_URL = "https://s09e6850fd.execute-api.eu-west-1.amazonaws.com"
+// const API_BASE_URL = "http://localhost:3000"
 
 export const useTranscriptionStore = defineStore("transcription", () => {
   // State

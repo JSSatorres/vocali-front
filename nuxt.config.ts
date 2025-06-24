@@ -38,7 +38,7 @@ export default defineNuxtConfig({
 
   // Configuración de servidor de desarrollo
   devServer: {
-    port: 3000,
+    port: 3001,
     host: "localhost",
   },
 

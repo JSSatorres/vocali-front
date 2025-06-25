@@ -33,6 +33,7 @@ export default defineNuxtConfig({
       cognitoRegion: process.env.NUXT_PUBLIC_AUTH_COGNITO_REGION,
       cognitoUserPoolId: process.env.NUXT_PUBLIC_AUTH_COGNITO_USER_POOL_ID,
       cognitoClientId: process.env.NUXT_PUBLIC_AUTH_COGNITO_CLIENT_ID,
+      API_BASE_URL: process.env.NUXT_PUBLIC_API_BASE_URL,
     },
   },
 

@@ -11,8 +11,14 @@ mockNuxtImport("useAuth", () => {
   return () => ({
     user: { value: { name: "Test User" } },
     isAuthenticated: { value: true },
+    getIdToken: vi.fn().mockResolvedValue("mock-token"),
   })
 })
+
+// Mock config
+vi.mock("~/utils/config", () => ({
+  API_BASE_URL: "https://s09e6850fd.execute-api.eu-west-1.amazonaws.com",
+}))
 
 // Mock components to simplify rendering
 mockComponent("DashboardAudioUpload", { template: "<div>Audio Upload</div>" })

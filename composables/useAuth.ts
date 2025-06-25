@@ -7,6 +7,7 @@ import {
   resendSignUpCode,
 } from "aws-amplify/auth"
 import type { AuthUser } from "aws-amplify/auth"
+import { fetchAuthSession } from "aws-amplify/auth"
 
 export const useAuth = () => {
   const user = ref<AuthUser | null>(null)
@@ -142,6 +143,16 @@ export const useAuth = () => {
     }
   }
 
+  const getIdToken = async (): Promise<string | null> => {
+    try {
+      const session = await fetchAuthSession()
+      return session.tokens?.idToken?.toString() ?? null
+    } catch (err) {
+      console.error("Error getting ID token", err)
+      return null
+    }
+  }
+
   return {
     user: readonly(user),
     isLoading: readonly(isLoading),
@@ -153,5 +164,6 @@ export const useAuth = () => {
     resendConfirmationCode,
     logout,
     checkAuth,
+    getIdToken,
   }
 }

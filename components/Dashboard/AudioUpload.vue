@@ -102,6 +102,10 @@
 import { storeToRefs } from "pinia"
 import { useTranscriptionStore } from "~/stores/transcription"
 
+const emit = defineEmits<{
+  uploadSuccess: []
+}>()
+
 const store = useTranscriptionStore()
 const { isUploading, error } = storeToRefs(store)
 const { uploadTranscription } = store
@@ -150,6 +154,8 @@ const startTranscription = async () => {
       description: "Your file is now being processed.",
     })
     reset()
+    // Emit success event to parent component
+    emit("uploadSuccess")
   } else {
     useToast().add({
       title: "Upload Failed",

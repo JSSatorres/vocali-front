@@ -7,14 +7,24 @@ import { mockComponent, mockNuxtImport } from "@nuxt/test-utils/runtime"
 import { useTranscriptionStore } from "~/stores/transcription"
 import { TranscriptionMother } from "../test-data/TranscriptionMother"
 
-// Mock toast composable
+mockNuxtImport("useAuth", () => {
+  return () => ({
+    user: { value: { name: "Test User" } },
+    isAuthenticated: { value: true },
+    getIdToken: vi.fn().mockResolvedValue("mock-token"),
+  })
+})
+
+vi.mock("~/utils/config", () => ({
+  API_BASE_URL: "https://s09e6850fd.execute-api.eu-west-1.amazonaws.com",
+}))
+
 mockNuxtImport("useToast", () => {
   return () => ({
     add: vi.fn(),
   })
 })
 
-// Mock UI components to simplify rendering
 mockComponent("UCard", { template: '<div class="u-card"><slot /></div>' })
 mockComponent("UButton", { template: "<button><slot /></button>" })
 mockComponent("UBadge", { template: '<span class="badge"><slot /></span>' })
@@ -26,6 +36,17 @@ mockComponent("DashboardTranscriptionCard", {
   template:
     '<div class="transcription-card">{{ transcription.filename }}</div>',
   props: ["transcription"],
+})
+mockComponent("DashboardTranscriptionsList", {
+  template: '<div class="transcriptions-list">Transcriptions List</div>',
+  props: [
+    "transcriptions",
+    "isLoading",
+    "searchQuery",
+    "sortBy",
+    "sortOptions",
+  ],
+  emits: ["refresh", "delete", "update:sortBy"],
 })
 
 describe("TranscriptionHistory Component", () => {
@@ -46,14 +67,12 @@ describe("TranscriptionHistory Component", () => {
   })
 
   it("should show empty state when no transcriptions", async () => {
-    // Set empty state
     store.transcriptions = []
     store.isLoading = false
 
     const wrapper = await mountSuspended(TranscriptionHistory)
 
-    // Check if the component renders the main stats
     expect(wrapper.text()).toContain("Total")
-    expect(wrapper.text()).toContain("0") // Should show 0 for empty stats
+    expect(wrapper.text()).toContain("0")
   })
 })

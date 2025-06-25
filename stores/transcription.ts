@@ -4,18 +4,16 @@ import type {
   TranscriptionApiResponse,
 } from "~/types/transcription"
 
-const API_BASE_URL = "https://s09e6850fd.execute-api.eu-west-1.amazonaws.com"
-// const API_BASE_URL = "http://localhost:3000"
-
 export const useTranscriptionStore = defineStore("transcription", () => {
-  // State
+  const config = useRuntimeConfig()
+  const API_BASE_URL = config.public.API_BASE_URL
+
   const transcriptions = ref<Transcription[]>([])
   const isLoading = ref(false)
-  const isUploading = ref(false) // New state for upload status
+  const isUploading = ref(false)
   const error = ref<string | null>(null)
   const autoRefresh = ref<NodeJS.Timeout | null>(null)
 
-  // Getters (Computed)
   const totalTranscriptions = computed(() => transcriptions.value.length)
   const completedTranscriptions = computed(
     () => transcriptions.value.filter((t) => t.status === "completed").length
@@ -47,15 +45,32 @@ export const useTranscriptionStore = defineStore("transcription", () => {
     if (isLoading.value) return
     isLoading.value = true
     error.value = null
+
+    const { getIdToken } = useAuth()
+    const token = await getIdToken()
     try {
       const response = await $fetch<TranscriptionApiResponse>(
         `${API_BASE_URL}/transcriptions`,
         {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
       )
+
       if (response.status === "success") {
+        response.data.forEach((t, index) => {
+          console.log(`Transcription ${index}:`, {
+            id: t.id,
+            filename: t.filename,
+            status: t.status,
+            transcriptionTextLength: t.transcriptionText?.length || 0,
+            hasTranscriptionText: !!t.transcriptionText,
+          })
+        })
+
         transcriptions.value = response.data
       } else {
         throw new Error(response.message || "Failed to fetch transcriptions")
@@ -76,6 +91,9 @@ export const useTranscriptionStore = defineStore("transcription", () => {
     isUploading.value = true
     error.value = null
 
+    const { getIdToken } = useAuth()
+    const token = await getIdToken()
+
     const formData = new FormData()
     formData.append("file", file)
     formData.append("settings", JSON.stringify(settings))
@@ -87,15 +105,15 @@ export const useTranscriptionStore = defineStore("transcription", () => {
         data: Transcription
       }>(`${API_BASE_URL}/transcriptions`, {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
-        // Do NOT set the Content-Type header here; let the browser handle it
       })
 
-      if (response.status === "success" && response.data) {
-        // Add the new transcription to the top of the list
+      if (response.status === "success") {
         transcriptions.value.unshift(response.data)
-        // Optionally, you can re-fetch the entire list to ensure consistency
-        // await fetchTranscriptions();
+        return { status: response.status }
       } else {
         throw new Error(response.message || "Upload failed")
       }
@@ -108,9 +126,15 @@ export const useTranscriptionStore = defineStore("transcription", () => {
   }
 
   const deleteTranscription = async (id: string): Promise<boolean> => {
+    const { getIdToken } = useAuth()
+    const token = await getIdToken()
     try {
       await $fetch(`${API_BASE_URL}/transcriptions/${id}`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       })
       // Optimistic update
       const index = transcriptions.value.findIndex((t) => t.id === id)
@@ -141,8 +165,6 @@ export const useTranscriptionStore = defineStore("transcription", () => {
         a.click()
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
-      } else {
-        console.warn("No transcription text available for download")
       }
     } catch (err: any) {
       error.value = err.message || "Failed to download transcription"
@@ -169,7 +191,6 @@ export const useTranscriptionStore = defineStore("transcription", () => {
     }
   }
 
-  // Helpers (can be part of the store or outside)
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",

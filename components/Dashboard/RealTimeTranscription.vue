@@ -201,12 +201,6 @@ const settings = ref({
   enablePunctuation: true,
 })
 
-const qualityOptions = markRaw([
-  { label: "High Quality", value: "high" },
-  { label: "Standard", value: "standard" },
-  { label: "Fast", value: "fast" },
-])
-
 let recordingInterval: NodeJS.Timeout | null = null
 let mediaRecorder: MediaRecorder | null = null
 

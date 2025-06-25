@@ -58,7 +58,7 @@
         <div class="mt-6">
           <!-- Audio Upload Tab -->
           <div v-if="item.key === 'upload'" class="w-full">
-            <DashboardAudioUpload />
+            <DashboardAudioUpload @upload-success="handleUploadSuccess" />
           </div>
 
           <!-- Real Time Transcription Tab -->
@@ -79,7 +79,6 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia"
 import { useTranscriptionStore } from "~/stores/transcription"
-// Explicit imports for dashboard components
 import DashboardAudioUpload from "~/components/Dashboard/AudioUpload.vue"
 import DashboardRealTimeTranscription from "~/components/Dashboard/RealTimeTranscription.vue"
 import DashboardTranscriptionHistory from "~/components/Dashboard/TranscriptionHistory.vue"
@@ -91,6 +90,10 @@ definePageMeta({
 const { user } = useAuth()
 const transcriptionStore = useTranscriptionStore()
 const { totalTranscriptions, totalDuration } = storeToRefs(transcriptionStore)
+
+const handleUploadSuccess = async () => {
+  await transcriptionStore.fetchTranscriptions()
+}
 
 onMounted(() => {
   transcriptionStore.fetchTranscriptions()

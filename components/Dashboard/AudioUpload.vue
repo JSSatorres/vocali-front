@@ -101,6 +101,7 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia"
 import { useTranscriptionStore } from "~/stores/transcription"
+import { audioSettings } from "./dashboardsUtils/dashboardsUtils"
 
 const emit = defineEmits<{
   uploadSuccess: []
@@ -113,12 +114,6 @@ const { uploadTranscription } = store
 const dragover = ref(false)
 const selectedFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement>()
-
-const settings = ref({
-  quality: "high",
-  enableTimestamps: true,
-  enableSpeakerLabels: false,
-})
 
 const handleDrop = (event: DragEvent) => {
   dragover.value = false
@@ -146,7 +141,7 @@ const formatFileSize = (bytes: number) => {
 const startTranscription = async () => {
   if (!selectedFile.value) return
 
-  await uploadTranscription(selectedFile.value, settings.value)
+  await uploadTranscription(selectedFile.value, audioSettings)
 
   if (!error.value) {
     useToast().add({

@@ -42,3 +42,9 @@ export const parseDuration = (duration: string): number => {
   }
   return 0
 }
+
+export const audioSettings = {
+  quality: "high",
+  enableTimestamps: true,
+  enableSpeakerLabels: false,
+}

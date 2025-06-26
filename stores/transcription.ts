@@ -74,6 +74,8 @@ export const useTranscriptionStore = defineStore("transcription", () => {
     const { getIdToken } = useAuth()
     const token = await getIdToken()
 
+    console.log("Store: Got auth token, length:", token?.length)
+
     const formData = new FormData()
     formData.append("file", file)
     formData.append("settings", JSON.stringify(settings))
@@ -98,7 +100,44 @@ export const useTranscriptionStore = defineStore("transcription", () => {
         throw new Error(response.message || "Upload failed")
       }
     } catch (err: any) {
-      error.value = err.data?.message || err.message || "Failed to upload file"
+      console.error("Store: Upload error details:", err)
+      console.error("Store: Error status:", err.status)
+      console.error("Store: Error data:", err.data)
+      console.error("Store: Error response:", err.response)
+
+      // Intenta obtener más detalles del error
+      if (err.status === 400) {
+        console.error("Store: 400 Bad Request - This might be due to:")
+        console.error("- File format not supported")
+        console.error("- Missing required fields")
+        console.error("- File size too large")
+        console.error("- Invalid settings format")
+        console.error("Store: Settings being sent:", settings)
+      } else if (err.status === 500) {
+        console.error("Store: 500 Internal Server Error - Server-side issue:")
+        console.error("- Transcription service might be down")
+        console.error("- Error processing the audio file")
+        console.error("- Database or storage issue")
+        console.error("Store: File details:", {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+        })
+      }
+
+      // Intenta extraer más información del mensaje de error
+      let errorMessage = "An unexpected error occurred"
+      if (err.data?.message) {
+        errorMessage = err.data.message
+      } else if (err.message) {
+        errorMessage = err.message
+      } else if (err.status) {
+        errorMessage = `Server error (${err.status}): ${
+          err.statusText || "Unknown error"
+        }`
+      }
+
+      error.value = errorMessage
       console.error("Error uploading transcription:", err)
     } finally {
       isUploading.value = false
@@ -116,7 +155,7 @@ export const useTranscriptionStore = defineStore("transcription", () => {
           Authorization: `Bearer ${token}`,
         },
       })
-      // Optimistic update
+
       const index = transcriptions.value.findIndex((t) => t.id === id)
       if (index !== -1) {
         transcriptions.value.splice(index, 1)
@@ -124,8 +163,7 @@ export const useTranscriptionStore = defineStore("transcription", () => {
       return true
     } catch (err: any) {
       error.value = err.message || "Failed to delete transcription"
-      console.error("Error deleting transcription:", err)
-      // Re-fetch to get the correct state from the server
+
       await fetchTranscriptions()
       return false
     }

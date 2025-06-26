@@ -63,7 +63,9 @@
 
           <!-- Real Time Transcription Tab -->
           <div v-else-if="item.key === 'realtime'" class="w-full">
-            <DashboardRealTimeTranscription />
+            <DashboardRealTimeTranscription
+              @upload-success="handleUploadSuccess"
+            />
           </div>
 
           <!-- History Tab -->
@@ -85,6 +87,7 @@ import DashboardTranscriptionHistory from "~/components/Dashboard/TranscriptionH
 
 definePageMeta({
   middleware: "auth",
+  ssr: false,
 })
 
 const { user } = useAuth()

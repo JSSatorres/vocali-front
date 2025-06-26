@@ -24,7 +24,6 @@
     </template>
 
     <div class="space-y-4">
-      <!-- Loading State -->
       <div v-if="isLoading" class="space-y-4">
         <div v-for="i in 3" :key="i" class="animate-pulse">
           <div
@@ -41,7 +40,6 @@
         </div>
       </div>
 
-      <!-- Empty State -->
       <div v-else-if="transcriptions.length === 0" class="text-center py-12">
         <UIcon
           name="i-lucide-file-text"
@@ -59,7 +57,6 @@
         </p>
       </div>
 
-      <!-- Transcriptions -->
       <div v-else class="space-y-4">
         <DashboardTranscriptionCard
           v-for="transcription in transcriptions"
@@ -75,7 +72,7 @@
 
 <script setup lang="ts">
 import type { Transcription } from "~/types/transcription"
-import DashboardTranscriptionCard from "~/components/Dashboard/TranscriptionCard.vue"
+import DashboardTranscriptionCard from "~/components/Dashboard/TranscriptionHistoryComponents/TranscriptionCard.vue"
 
 interface Props {
   transcriptions: Transcription[]

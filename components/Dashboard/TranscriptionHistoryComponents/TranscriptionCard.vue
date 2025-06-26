@@ -125,7 +125,7 @@
 
 <script setup lang="ts">
 import type { Transcription } from "~/types/transcription"
-import { formatDate, getStatusColor } from "./dashboardsUtils/dashboardsUtils"
+import { formatDate, getStatusColor } from "../dashboardsUtils/dashboardsUtils"
 interface Props {
   transcription: Transcription
 }

@@ -1,185 +1,46 @@
 <template>
   <div class="space-y-6">
-    <!-- Recording Controls -->
-    <UCard v-if="!recordedAudioUrl">
-      <div class="text-center p-8">
-        <div
-          class="mx-auto h-24 mb-6 rounded-full flex items-center justify-center transition-colors"
-          :class="
-            isRecording
-              ? 'bg-red-100 dark:bg-red-900/20'
-              : 'bg-blue-100 dark:bg-blue-900/20'
-          "
-        >
-          <UIcon
-            :name="isRecording ? 'i-lucide-mic' : 'i-lucide-mic-off'"
-            class="w-12 h-12"
-            :class="isRecording ? 'text-red-500' : 'text-blue-500'"
-          />
-        </div>
-
-        <h3 class="text-xl font-semibold mb-2">
-          {{ isRecording ? "Recording..." : "Real-Time Transcription" }}
-        </h3>
-
-        <p class="text-gray-600 dark:text-gray-400 mb-6">
-          {{
-            isRecording
-              ? "Click stop when finished"
-              : "Click the microphone to start recording"
-          }}
-        </p>
-
-        <!-- Recording Timer -->
-        <div v-if="isRecording" class="mb-6">
-          <div class="text-2xl font-mono font-bold text-red-500 mb-2">
-            {{ formatTime(recordingTime) }}
-          </div>
-          <div
-            class="flex items-center justify-center gap-2 text-sm text-gray-600"
-          >
-            <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-            Recording in progress
-          </div>
-        </div>
-
-        <!-- Control Buttons -->
-        <div class="flex items-center justify-center gap-4">
-          <UButton
-            v-if="!isRecording"
-            @click="startRecording"
-            size="lg"
-            :disabled="!hasPermission"
-            data-cy="start-recording-button"
-          >
-            <UIcon name="i-lucide-mic" class="w-5 h-5 mr-2" />
-            Start Recording
-          </UButton>
-
-          <template v-else>
-            <UButton
-              v-if="!isPaused"
-              @click="pauseRecording"
-              variant="outline"
-              size="lg"
-              data-cy="pause-button"
-            >
-              <UIcon name="i-lucide-pause" class="w-5 h-5 mr-2" />
-              Pause
-            </UButton>
-
-            <UButton
-              v-if="isPaused"
-              @click="resumeRecording"
-              variant="outline"
-              size="lg"
-              data-cy="resume-button"
-            >
-              <UIcon name="i-lucide-play" class="w-5 h-5 mr-2" />
-              Resume
-            </UButton>
-
-            <UButton
-              @click="stopRecording"
-              color="red"
-              size="lg"
-              data-cy="stop-recording-button"
-            >
-              <UIcon name="i-lucide-square" class="w-5 h-5 mr-2" />
-              Stop
-            </UButton>
-          </template>
-        </div>
-
-        <!-- Permission Warning -->
-        <div
-          v-if="!hasPermission && showPermissionWarning"
-          class="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg"
-        >
-          <div
-            class="flex items-center gap-2 text-amber-800 dark:text-amber-200"
-          >
-            <UIcon name="i-lucide-alert-triangle" class="w-4 h-4" />
-            <span class="text-sm"
-              >Microphone permission required for recording</span
-            >
-          </div>
-        </div>
-      </div>
-    </UCard>
-
-    <!-- Recording Review -->
-    <UCard v-if="recordedAudioUrl && !isUploading">
-      <template #header>
-        <h3 class="text-lg font-semibold">Review Recording</h3>
-      </template>
-      <div class="space-y-4 p-4">
-        <audio controls :src="recordedAudioUrl" class="w-full"></audio>
-        <div class="flex justify-end gap-3 mt-4">
-          <UButton @click="handleUpload" data-cy="upload-recording-button">
-            <UIcon name="i-lucide-upload" class="w-5 h-5 mr-2" />
-            Upload
-          </UButton>
-          <UButton
-            @click="discardRecording"
-            variant="outline"
-            color="red"
-            data-cy="discard-recording-button"
-          >
-            <UIcon name="i-lucide-trash-2" class="w-5 h-5 mr-2" />
-            Discard
-          </UButton>
-        </div>
-      </div>
-    </UCard>
-
-    <!-- Upload Progress -->
-    <UCard v-if="isUploading" class="w-full">
-      <div class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold">Processing Recording...</h3>
-        </div>
-        <UProgress animation="carousel" data-cy="upload-progress" />
-        <p class="text-sm text-gray-600 dark:text-gray-400">
-          Uploading your recording. This may take a few moments...
-        </p>
-      </div>
-    </UCard>
-
-    <!-- Live Transcription -->
-    <UCard v-if="isRecording || (transcriptionText && !recordedAudioUrl)">
-      <template #header>
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold">Live Transcription</h3>
-          <div class="flex items-center gap-2">
-            <UButton
-              v-if="transcriptionText"
-              @click="copyTranscription"
-              variant="ghost"
-              size="sm"
-              data-cy="copy-button"
-            >
-              <UIcon name="i-lucide-copy" class="w-4 h-4" />
-            </UButton>
-            <UButton
-              v-if="transcriptionText"
-              @click="downloadTranscription"
-              variant="ghost"
-              size="sm"
-              data-cy="download-button"
-            >
-              <UIcon name="i-lucide-download" class="w-4 h-4" />
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </UCard>
+    <RecordingControls
+      :isRecording="isRecording"
+      :isPaused="isPaused"
+      :hasPermission="hasPermission"
+      :showPermissionWarning="showPermissionWarning"
+      :recordedAudioUrl="recordedAudioUrl ?? undefined"
+      :recordingTime="recordingTime"
+      :formatTime="formatTime"
+      @start="startRecording"
+      @pause="pauseRecording"
+      @resume="resumeRecording"
+      @stop="stopRecording"
+    />
+    <RecordingReview
+      v-if="recordedAudioUrl && !isUploading && !isConverting"
+      :audio-url="recordedAudioUrl"
+      @upload="handleUpload"
+      @discard="discardRecording"
+    />
+    <UploadConversionProgress v-if="isUploading || isConverting" />
+    <!-- :is-converting="isConverting"
+      :conversion-progress="conversionProgress" -->
+    <LiveTranscription
+      v-if="isRecording || (transcriptionText && !recordedAudioUrl)"
+      :transcription-text="transcriptionText"
+      @copy="copyTranscription"
+      @download="downloadTranscription"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from "vue"
 import { storeToRefs } from "pinia"
 import { useTranscriptionStore } from "~/stores/transcription"
+import { FFmpeg } from "@ffmpeg/ffmpeg"
+import { fetchFile, toBlobURL } from "@ffmpeg/util"
+
+const emit = defineEmits<{
+  uploadSuccess: []
+}>()
 
 const store = useTranscriptionStore()
 const { isUploading, error } = storeToRefs(store)
@@ -194,6 +55,8 @@ const transcriptionText = ref("")
 const audioChunks = ref<Blob[]>([])
 const recordedAudioUrl = ref<string | null>(null)
 const recordedAudioFile = ref<File | null>(null)
+const isConverting = ref(false)
+const conversionProgress = ref(0)
 
 const settings = ref({
   quality: "high",
@@ -203,6 +66,7 @@ const settings = ref({
 
 let recordingInterval: NodeJS.Timeout | null = null
 let mediaRecorder: MediaRecorder | null = null
+let ffmpeg: FFmpeg | null = null
 
 const checkMicrophonePermission = async () => {
   try {
@@ -292,27 +156,90 @@ const stopRecording = () => {
 const handleUpload = async () => {
   if (!recordedAudioFile.value) return
 
-  const formData = new FormData()
-  formData.append("file", recordedAudioFile.value)
-  formData.append("settings", JSON.stringify(settings.value))
+  try {
+    isConverting.value = true
+    conversionProgress.value = 0
 
-  // Pass File to the store action
-  await uploadTranscription(recordedAudioFile.value, { pepe: "2sdsad" })
+    // Convertir a MP3
+    const mp3File = await convertToMp3(recordedAudioFile.value)
 
-  if (!error.value) {
+    if (!mp3File) {
+      throw new Error("Error converting audio to MP3")
+    }
+
+    // Subir el archivo MP3
+    await uploadTranscription(mp3File, settings.value)
+
+    if (!error.value) {
+      useToast().add({
+        title: "Recording Uploaded",
+        description:
+          "Your recording is being processed and will appear in History.",
+      })
+      emit("uploadSuccess")
+    } else {
+      useToast().add({
+        title: "Upload Failed",
+        description: error.value || "An unknown error occurred.",
+        color: "red",
+      })
+    }
+  } catch (err: any) {
     useToast().add({
-      title: "Recording Uploaded",
-      description:
-        "Your recording is being processed and will appear in History.",
-    })
-  } else {
-    useToast().add({
-      title: "Upload Failed",
-      description: error.value || "An unknown error occurred.",
+      title: "Conversion Failed",
+      description: err.message || "Error converting audio to MP3",
       color: "red",
     })
+  } finally {
+    isConverting.value = false
+    conversionProgress.value = 0
+    discardRecording()
   }
-  discardRecording() // Reset state after upload
+}
+
+const convertToMp3 = async (webmFile: File): Promise<File | null> => {
+  try {
+    if (!ffmpeg) {
+      ffmpeg = new FFmpeg()
+      const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.2/dist/umd"
+      await ffmpeg.load({
+        coreURL: await toBlobURL(
+          `${baseURL}/ffmpeg-core.js`,
+          "text/javascript"
+        ),
+        wasmURL: await toBlobURL(
+          `${baseURL}/ffmpeg-core.wasm`,
+          "application/wasm"
+        ),
+      })
+      ffmpeg.on("progress", ({ progress }) => {
+        conversionProgress.value = Math.round(progress * 100)
+      })
+    }
+    await ffmpeg.writeFile("input.webm", await fetchFile(webmFile))
+    await ffmpeg.exec([
+      "-i",
+      "input.webm",
+      "-codec:a",
+      "libmp3lame",
+      "-b:a",
+      "128k",
+      "output.mp3",
+    ])
+    const mp3Data = await ffmpeg.readFile("output.mp3")
+    const mp3Blob = new Blob([mp3Data], { type: "audio/mp3" })
+    const mp3File = new File(
+      [mp3Blob],
+      webmFile.name.replace(".webm", ".mp3"),
+      { type: "audio/mp3" }
+    )
+    await ffmpeg.deleteFile("input.webm")
+    await ffmpeg.deleteFile("output.mp3")
+    return mp3File
+  } catch (error) {
+    console.error("Error converting to MP3:", error)
+    return null
+  }
 }
 
 const discardRecording = () => {
@@ -367,6 +294,10 @@ onUnmounted(() => {
   }
   if (mediaRecorder && isRecording.value) {
     stopRecording()
+  }
+  if (ffmpeg) {
+    ffmpeg.terminate()
+    ffmpeg = null
   }
 })
 </script>

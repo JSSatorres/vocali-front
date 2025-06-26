@@ -1,4 +1,5 @@
 import { defineStore } from "pinia"
+import { parseDuration } from "~/components/Dashboard/dashboardsUtils/dashboardsUtils"
 import type {
   Transcription,
   TranscriptionApiResponse,
@@ -18,17 +19,6 @@ export const useTranscriptionStore = defineStore("transcription", () => {
   const completedTranscriptions = computed(
     () => transcriptions.value.filter((t) => t.status === "completed").length
   )
-
-  const parseDuration = (duration: string): number => {
-    if (!duration || typeof duration !== "string") return 0
-    const parts = duration.split(":").map(Number)
-    if (parts.length === 2) {
-      return parts[0] * 60 + parts[1] // mm:ss
-    } else if (parts.length === 3) {
-      return parts[0] * 3600 + parts[1] * 60 + parts[2] // hh:mm:ss
-    }
-    return 0
-  }
 
   const totalDuration = computed(() => {
     const totalSeconds = transcriptions.value
@@ -61,16 +51,6 @@ export const useTranscriptionStore = defineStore("transcription", () => {
       )
 
       if (response.status === "success") {
-        response.data.forEach((t, index) => {
-          console.log(`Transcription ${index}:`, {
-            id: t.id,
-            filename: t.filename,
-            status: t.status,
-            transcriptionTextLength: t.transcriptionText?.length || 0,
-            hasTranscriptionText: !!t.transcriptionText,
-          })
-        })
-
         transcriptions.value = response.data
       } else {
         throw new Error(response.message || "Failed to fetch transcriptions")
@@ -191,30 +171,6 @@ export const useTranscriptionStore = defineStore("transcription", () => {
     }
   }
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case "completed":
-        return "green"
-      case "processing":
-        return "amber"
-      case "failed":
-        return "red"
-      case "pending":
-      default:
-        return "gray"
-    }
-  }
-
   return {
     // State
     transcriptions,
@@ -232,8 +188,5 @@ export const useTranscriptionStore = defineStore("transcription", () => {
     downloadTranscription,
     startAutoRefresh,
     stopAutoRefresh,
-    // Helpers
-    formatDate,
-    getStatusColor,
   }
 })

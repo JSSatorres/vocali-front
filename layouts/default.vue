@@ -47,8 +47,6 @@
               v-if="!isAuthenticated"
               class="hidden md:flex items-center space-x-2"
             >
-              <UButton variant="ghost" size="sm" to="/about">About</UButton>
-              <UButton variant="ghost" size="sm" to="/contact">Contact</UButton>
               <UButton variant="outline" size="sm" to="/auth/login"
                 >Login</UButton
               >
@@ -113,15 +111,6 @@
             variant="ghost"
             size="sm"
             block
-            to="/about"
-            @click="isMobileMenuOpen = false"
-          >
-            About
-          </UButton>
-          <UButton
-            variant="ghost"
-            size="sm"
-            block
             to="/contact"
             @click="isMobileMenuOpen = false"
           >
@@ -182,20 +171,8 @@
           <div
             class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400"
           >
-            <NuxtLink
-              to="/about"
-              class="hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              About
-            </NuxtLink>
-            <NuxtLink
-              to="/contact"
-              class="hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              Contact
-            </NuxtLink>
             <a
-              href="https://github.com"
+              href="https://github.com/JSSatorres"
               target="_blank"
               rel="noopener noreferrer"
               class="hover:text-gray-900 dark:hover:text-white transition-colors"

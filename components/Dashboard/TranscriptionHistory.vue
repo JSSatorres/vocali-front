@@ -74,8 +74,8 @@ import { storeToRefs } from "pinia"
 import { useTranscriptionStore } from "~/stores/transcription"
 import type { Transcription } from "~/types/transcription"
 // Explicit import for components
-import DashboardTranscriptionCard from "~/components/Dashboard/TranscriptionCard.vue"
-import DashboardTranscriptionsList from "~/components/Dashboard/TranscriptionsList.vue"
+
+import DashboardTranscriptionsList from "~/components/Dashboard/TranscriptionHistoryComponents/TranscriptionsList.vue"
 import { parseDuration } from "./dashboardsUtils/dashboardsUtils"
 
 const store = useTranscriptionStore()

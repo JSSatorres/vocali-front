@@ -17,12 +17,13 @@ export const useTranscriptionStore = defineStore("transcription", () => {
 
   const totalTranscriptions = computed(() => transcriptions.value.length)
   const completedTranscriptions = computed(
-    () => transcriptions.value.filter((t) => t.status === "completed").length
+    () =>
+      transcriptions.value.filter((t) => t && t.status === "completed").length
   )
 
   const totalDuration = computed(() => {
     const totalSeconds = transcriptions.value
-      .filter((t) => t.status === "completed" && t.duration)
+      .filter((t) => t && t.status === "completed" && t.duration)
       .reduce((acc, t) => acc + parseDuration(t.duration), 0)
 
     const hours = Math.floor(totalSeconds / 3600)
@@ -57,7 +58,6 @@ export const useTranscriptionStore = defineStore("transcription", () => {
       }
     } catch (err: any) {
       error.value = err.message || "Failed to fetch transcriptions"
-      console.error("Error fetching transcriptions:", err)
       if (err.status === 401 || err.status === 403) {
         await navigateTo("/auth/login")
       }
@@ -74,17 +74,19 @@ export const useTranscriptionStore = defineStore("transcription", () => {
     const { getIdToken } = useAuth()
     const token = await getIdToken()
 
-    console.log("Store: Got auth token, length:", token?.length)
-
     const formData = new FormData()
     formData.append("file", file)
     formData.append("settings", JSON.stringify(settings))
 
     try {
       const response = await $fetch<{
-        status: string
         message: string
-        data: Transcription
+        status: string
+        transcriptionId: string
+        filename: string
+        fileSize: string
+        timestamp: string
+        requestId: string
       }>(`${API_BASE_URL}/transcriptions`, {
         method: "POST",
         headers: {
@@ -93,39 +95,28 @@ export const useTranscriptionStore = defineStore("transcription", () => {
         body: formData,
       })
 
-      if (response.status === "success") {
-        transcriptions.value.unshift(response.data)
-        return { status: response.status }
+      if (response && response.status === "success") {
+        const transcriptionData: Transcription = {
+          id: response.transcriptionId,
+          filename: response.filename,
+          duration: "0:00",
+          fileSize: response.fileSize,
+          s3Key: "",
+          status: "processing",
+          transcriptionText: "",
+          createdAt: response.timestamp,
+          language: "es",
+        }
+
+        transcriptions.value.unshift(transcriptionData)
+
+        return { status: "success", data: transcriptionData }
       } else {
-        throw new Error(response.message || "Upload failed")
+        throw new Error(
+          response?.message || "Upload failed - No valid response"
+        )
       }
     } catch (err: any) {
-      console.error("Store: Upload error details:", err)
-      console.error("Store: Error status:", err.status)
-      console.error("Store: Error data:", err.data)
-      console.error("Store: Error response:", err.response)
-
-      // Intenta obtener más detalles del error
-      if (err.status === 400) {
-        console.error("Store: 400 Bad Request - This might be due to:")
-        console.error("- File format not supported")
-        console.error("- Missing required fields")
-        console.error("- File size too large")
-        console.error("- Invalid settings format")
-        console.error("Store: Settings being sent:", settings)
-      } else if (err.status === 500) {
-        console.error("Store: 500 Internal Server Error - Server-side issue:")
-        console.error("- Transcription service might be down")
-        console.error("- Error processing the audio file")
-        console.error("- Database or storage issue")
-        console.error("Store: File details:", {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-        })
-      }
-
-      // Intenta extraer más información del mensaje de error
       let errorMessage = "An unexpected error occurred"
       if (err.data?.message) {
         errorMessage = err.data.message
@@ -138,7 +129,6 @@ export const useTranscriptionStore = defineStore("transcription", () => {
       }
 
       error.value = errorMessage
-      console.error("Error uploading transcription:", err)
     } finally {
       isUploading.value = false
     }
@@ -186,7 +176,6 @@ export const useTranscriptionStore = defineStore("transcription", () => {
       }
     } catch (err: any) {
       error.value = err.message || "Failed to download transcription"
-      console.error("Error downloading transcription:", err)
     }
   }
 
@@ -194,7 +183,7 @@ export const useTranscriptionStore = defineStore("transcription", () => {
     if (autoRefresh.value) return
     autoRefresh.value = setInterval(() => {
       const hasProcessing = transcriptions.value.some(
-        (t) => t.status === "processing" || t.status === "pending"
+        (t) => t && (t.status === "processing" || t.status === "pending")
       )
       if (hasProcessing) {
         fetchTranscriptions()
@@ -207,6 +196,11 @@ export const useTranscriptionStore = defineStore("transcription", () => {
       clearInterval(autoRefresh.value)
       autoRefresh.value = null
     }
+  }
+
+  const resetUploadState = () => {
+    isUploading.value = false
+    error.value = null
   }
 
   return {
@@ -226,5 +220,6 @@ export const useTranscriptionStore = defineStore("transcription", () => {
     downloadTranscription,
     startAutoRefresh,
     stopAutoRefresh,
+    resetUploadState,
   }
 })

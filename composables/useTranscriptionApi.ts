@@ -38,7 +38,7 @@ export const useTranscriptionApi = async () => {
         throw new Error(response.message || "Failed to fetch transcriptions")
       }
     } catch (err: any) {
-      console.error("Error fetching transcriptions:", err)
+
       error.value = err.message || "Failed to fetch transcriptions"
 
       if (err.status === 401 || err.status === 403) {
@@ -71,7 +71,6 @@ export const useTranscriptionApi = async () => {
       }
       return null
     } catch (err: any) {
-      console.error("Error fetching transcription:", err)
       error.value = err.message || "Failed to fetch transcription"
       return null
     }

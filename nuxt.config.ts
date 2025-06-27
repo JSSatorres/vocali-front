@@ -66,4 +66,18 @@ export default defineNuxtConfig({
       link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
     },
   },
+
+  // Vite configuration for audio processing
+  vite: {
+    optimizeDeps: {
+      exclude: [],
+    },
+  },
+
+  // Nitro configuration for server
+  nitro: {
+    experimental: {
+      wasm: true,
+    },
+  },
 })

@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <RecordingControls
-      v-if="!recordedAudioUrl"
+      v-if="shouldShowRecordingControls"
       :isRecording="isRecording"
       :isPaused="isPaused"
       :hasPermission="hasPermission"
@@ -15,16 +15,31 @@
       @stop="stopRecording"
     />
     <RecordingReview
-      v-if="recordedAudioUrl && !isUploading && !isConverting"
-      :audioUrl="recordedAudioUrl"
+      v-else-if="shouldShowRecordingReview"
+      :audioUrl="recordedAudioUrl!"
       :isUploading="isUploading"
       @upload="handleUpload"
       @discard="discardRecordingAndReset"
     />
     <UploadConversionProgress
-      v-if="isUploading || isConverting"
+      v-else-if="shouldShowProgress"
       :isConverting="isConverting"
       :conversionProgress="conversionProgress"
+    />
+    <!-- Fallback component to ensure something is always shown -->
+    <RecordingControls
+      v-else
+      :isRecording="false"
+      :isPaused="false"
+      :hasPermission="hasPermission"
+      :showPermissionWarning="showPermissionWarning"
+      :recordedAudioUrl="undefined"
+      :recordingTime="0"
+      :formatTime="formatTime"
+      @start="startRecording"
+      @pause="pauseRecording"
+      @resume="resumeRecording"
+      @stop="stopRecording"
     />
     <LiveTranscription
       v-if="isRecording || (transcriptionText && !recordedAudioUrl)"
@@ -34,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue"
+import { ref, onMounted, onUnmounted, watch, nextTick, computed } from "vue"
 import { storeToRefs } from "pinia"
 import { useTranscriptionStore } from "~/stores/transcription"
 import { useAudioRecorder } from "~/composables/useAudioRecorder"
@@ -47,7 +62,7 @@ const emit = defineEmits<{
 
 const store = useTranscriptionStore()
 const { isUploading, error } = storeToRefs(store)
-const { uploadTranscription } = store
+const { uploadTranscription, resetUploadState } = store
 
 const {
   isRecording,
@@ -71,10 +86,10 @@ const {
   isConverting,
   conversionProgress,
   convertedAudioFile,
+  convertFileToMp3,
   cleanupConverter,
-} = useAudioConverter(recordedAudioFile)
+} = useAudioConverter()
 
-// Other component state
 const transcriptionText = ref("")
 
 const settings = ref({
@@ -83,9 +98,21 @@ const settings = ref({
   enablePunctuation: true,
 })
 
+// Computed properties to control UI state
+const shouldShowRecordingControls = computed(() => {
+  return !recordedAudioUrl.value && !isUploading.value && !isConverting.value
+})
+
+const shouldShowRecordingReview = computed(() => {
+  return !!recordedAudioUrl.value && !isUploading.value && !isConverting.value
+})
+
+const shouldShowProgress = computed(() => {
+  return isUploading.value || isConverting.value
+})
+
 const handleUpload = async () => {
   if (!recordedAudioFile.value) {
-    console.error("No recorded audio file available")
     useToast().add({
       title: "Upload Failed",
       description: "No audio file to upload",
@@ -94,35 +121,77 @@ const handleUpload = async () => {
     return
   }
 
-  console.log("Handling upload for file:", recordedAudioFile)
-
   try {
-    await uploadTranscription(convertedAudioFile.value!, audioSettings)
+    const result = await convertFileToMp3(recordedAudioFile.value)
+
+    if (!result) {
+      useToast().add({
+        title: "Conversion Failed",
+        description: "Failed to convert audio file",
+        color: "red",
+      })
+      await discardRecordingAndReset()
+      return
+    }
+
+    const uploadResult = await uploadTranscription(result, audioSettings)
+
     useToast().add({
       title: "Upload successful",
+      description: "Your audio has been transcribed successfully",
+      color: "green",
     })
+
+    // Emit success event to parent
+    emit("uploadSuccess")
   } catch (err: any) {
     useToast().add({
       title: "Upload Failed",
+      description: err.message || "Unknown error occurred",
       color: "red",
     })
   } finally {
-    discardRecordingAndReset()
+    // Always reset to initial state after upload (success or error)
+    await nextTick()
+    await discardRecordingAndReset()
   }
 }
 
-const discardRecordingAndReset = () => {
-  discardRecording()
-  transcriptionText.value = ""
+const discardRecordingAndReset = async () => {
+  try {
+    // Reset store upload state
+    resetUploadState()
+
+    // Discard recording and clean up audio state
+    await discardRecording()
+
+    // Clean up converter state
+    await cleanupConverter()
+
+    // Clear transcription text
+    transcriptionText.value = ""
+
+    // Force DOM updates to ensure UI returns to initial state
+    await nextTick()
+    await nextTick()
+  } catch (error) {
+    // Force reset even on error
+    resetUploadState()
+    await nextTick()
+  }
 }
 
-onMounted(() => {
+const forceResetState = async () => {
+  await discardRecordingAndReset()
+}
+
+onMounted(async () => {
   checkMicrophonePermission()
+  await forceResetState()
 })
 
-onUnmounted(() => {
-  // Use the composable's cleanup function
-  cleanup() // From useAudioRecorder
-  cleanupConverter() // From useAudioConverter
+onUnmounted(async () => {
+  await cleanup()
+  cleanupConverter()
 })
 </script>

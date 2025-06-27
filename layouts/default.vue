@@ -9,9 +9,11 @@
               name="i-lucide-headphones"
               class="w-8 h-8 mr-1 text-primary translate-y-1"
             />
-            <span class="font-bold text-xl text-gray-900 dark:text-white"
-              >Vocali-dev</span
+            <span
+              class="font-bold text-xs text-gray-900 dark:text-white md:text-xl"
             >
+              Vocali-dev
+            </span>
           </div>
 
           <div class="flex items-center space-x-4">
@@ -61,6 +63,7 @@
               <UDropdown
                 :items="userMenuItems"
                 :popper="{ placement: 'bottom-end' }"
+                class="hidden md:block"
               >
                 <UButton variant="ghost" class="flex items-center space-x-2">
                   <UAvatar

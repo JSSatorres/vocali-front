@@ -16,7 +16,7 @@ export interface AudioRecorderActions {
   pauseRecording: () => void
   resumeRecording: () => void
   stopRecording: () => void
-  discardRecording: () => void
+  discardRecording: () => Promise<void>
   formatTime: (seconds: number) => string
 }
 
@@ -60,7 +60,6 @@ export function useAudioRecorder(options: AudioRecorderOptions = {}) {
   const selectBestMimeType = (): string => {
     for (const mimeType of MIME_TYPES) {
       if (MediaRecorder.isTypeSupported(mimeType)) {
-        console.log(`Using mime type: ${mimeType}`)
         return mimeType
       }
     }
@@ -104,7 +103,6 @@ export function useAudioRecorder(options: AudioRecorderOptions = {}) {
 
       stream.getTracks().forEach((track: MediaStreamTrack) => track.stop())
     } catch (error) {
-      console.error("Microphone permission denied:", error)
       hasPermission.value = false
       showPermissionWarning.value = true
       options.onPermissionDenied?.()
@@ -144,23 +142,13 @@ export function useAudioRecorder(options: AudioRecorderOptions = {}) {
             recordedAudioFile.value = audioFile
             recordedAudioUrl.value = audioUrl
 
-            console.log(
-              `Audio file created as ${getFileExtension(selectedMimeType)
-                .slice(1)
-                .toUpperCase()}:`,
-              audioFile.name,
-              audioFile.size
-            )
-
             options.onRecordingStop?.(audioFile, audioUrl)
           } else {
-            console.warn("No audio chunks available")
             recordedAudioFile.value = null
             recordedAudioUrl.value = null
             options.onRecordingStop?.(null, null)
           }
         } catch (error) {
-          console.error("Error processing recorded audio:", error)
           options.onRecordingError?.(error as Error)
         } finally {
           audioChunks.value = []
@@ -168,7 +156,6 @@ export function useAudioRecorder(options: AudioRecorderOptions = {}) {
       }
 
       mediaRecorder.onerror = (event) => {
-        console.error("MediaRecorder error:", event)
         const error = new Error("Recording failed")
         options.onRecordingError?.(error)
       }
@@ -183,7 +170,6 @@ export function useAudioRecorder(options: AudioRecorderOptions = {}) {
       startTimer()
       options.onRecordingStart?.()
     } catch (error) {
-      console.error("Error starting recording:", error)
       hasPermission.value = false
       showPermissionWarning.value = true
       options.onRecordingError?.(error as Error)
@@ -197,9 +183,7 @@ export function useAudioRecorder(options: AudioRecorderOptions = {}) {
         mediaRecorder.pause()
         isPaused.value = true
         stopTimer()
-        console.log("Recording paused")
       } catch (error) {
-        console.error("Error pausing recording:", error)
         options.onRecordingError?.(error as Error)
       }
     }
@@ -213,9 +197,7 @@ export function useAudioRecorder(options: AudioRecorderOptions = {}) {
         recordingInterval = setInterval(() => {
           recordingTime.value++
         }, 1000)
-        console.log("Recording resumed")
       } catch (error) {
-        console.error("Error resuming recording:", error)
         options.onRecordingError?.(error as Error)
       }
     }
@@ -238,26 +220,35 @@ export function useAudioRecorder(options: AudioRecorderOptions = {}) {
       isRecording.value = false
       isPaused.value = false
       stopTimer()
-
-      console.log("Recording stopped")
     } catch (error) {
-      console.error("Error stopping recording:", error)
       options.onRecordingError?.(error as Error)
     }
   }
 
-  const discardRecording = (): void => {
+  const discardRecording = async (): Promise<void> => {
     try {
+      // Stop recording if still active
+      if (isRecording.value || isPaused.value) {
+        stopRecording()
+        // Wait for stop to complete
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
+
+      // Clean up URL and references
       if (recordedAudioUrl.value) {
         URL.revokeObjectURL(recordedAudioUrl.value)
       }
 
+      // Reset all state
       recordedAudioUrl.value = null
       recordedAudioFile.value = null
       recordingTime.value = 0
       audioChunks.value = []
+      isRecording.value = false
+      isPaused.value = false
 
-      console.log("Recording discarded")
+      // Force a small delay to ensure all refs are updated
+      await new Promise((resolve) => setTimeout(resolve, 10))
     } catch (error) {
       console.error("Error discarding recording:", error)
     }
@@ -271,9 +262,9 @@ export function useAudioRecorder(options: AudioRecorderOptions = {}) {
       .padStart(2, "0")}`
   }
 
-  const cleanup = (): void => {
+  const cleanup = async (): Promise<void> => {
     stopRecording()
-    discardRecording()
+    await discardRecording()
   }
 
   const state: AudioRecorderState = {

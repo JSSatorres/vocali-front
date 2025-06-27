@@ -96,6 +96,8 @@ const { totalTranscriptions, totalDuration } = storeToRefs(transcriptionStore)
 
 const handleUploadSuccess = async () => {
   await transcriptionStore.fetchTranscriptions()
+  // Navegar a la tab de History después del éxito
+  activeTab.value = 2 // Index de la tab 'history'
 }
 
 onMounted(() => {

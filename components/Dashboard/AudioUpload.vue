@@ -149,7 +149,6 @@ const startTranscription = async () => {
       description: "Your file is now being processed.",
     })
     reset()
-    // Emit success event to parent component
     emit("uploadSuccess")
   } else {
     useToast().add({

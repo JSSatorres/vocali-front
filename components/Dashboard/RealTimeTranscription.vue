@@ -104,7 +104,12 @@ const shouldShowRecordingControls = computed(() => {
 })
 
 const shouldShowRecordingReview = computed(() => {
-  return !!recordedAudioUrl.value && !isUploading.value && !isConverting.value
+  return (
+    !!recordedAudioUrl.value &&
+    recordedAudioUrl.value.trim() !== "" &&
+    !isUploading.value &&
+    !isConverting.value
+  )
 })
 
 const shouldShowProgress = computed(() => {
@@ -151,7 +156,6 @@ const handleUpload = async () => {
       color: "red",
     })
   } finally {
-    // Always reset to initial state after upload (success or error)
     await nextTick()
     await discardRecordingAndReset()
   }
@@ -159,25 +163,25 @@ const handleUpload = async () => {
 
 const discardRecordingAndReset = async () => {
   try {
-    // Reset store upload state
     resetUploadState()
-
-    // Discard recording and clean up audio state
-    await discardRecording()
-
-    // Clean up converter state
-    await cleanupConverter()
-
-    // Clear transcription text
     transcriptionText.value = ""
 
-    // Force DOM updates to ensure UI returns to initial state
-    await nextTick()
+    await cleanupConverter()
+    await discardRecording()
+
     await nextTick()
   } catch (error) {
-    // Force reset even on error
-    resetUploadState()
-    await nextTick()
+    console.error("Error during discard:", error)
+
+    try {
+      resetUploadState()
+      transcriptionText.value = ""
+      await cleanupConverter()
+      await discardRecording()
+      await nextTick()
+    } catch (fallbackError) {
+      console.error("Fallback reset also failed:", fallbackError)
+    }
   }
 }
 

@@ -1,5 +1,5 @@
 <template>
-  <UCard ">
+  <UCard>
     <div class="text-center p-8">
       <div
         class="mx-auto h-24 mb-6 rounded-full flex items-center justify-center transition-colors"

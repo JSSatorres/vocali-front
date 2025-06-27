@@ -230,27 +230,27 @@ export function useAudioRecorder(options: AudioRecorderOptions = {}) {
       // Stop recording if still active
       if (isRecording.value || isPaused.value) {
         stopRecording()
-        // Wait for stop to complete
         await new Promise((resolve) => setTimeout(resolve, 100))
       }
 
-      // Clean up URL and references
       if (recordedAudioUrl.value) {
         URL.revokeObjectURL(recordedAudioUrl.value)
       }
 
-      // Reset all state
-      recordedAudioUrl.value = null
-      recordedAudioFile.value = null
       recordingTime.value = 0
       audioChunks.value = []
       isRecording.value = false
       isPaused.value = false
-
-      // Force a small delay to ensure all refs are updated
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      recordedAudioFile.value = null
+      recordedAudioUrl.value = null
     } catch (error) {
-      console.error("Error discarding recording:", error)
+      // Force reset even on error
+      recordingTime.value = 0
+      audioChunks.value = []
+      isRecording.value = false
+      isPaused.value = false
+      recordedAudioFile.value = null
+      recordedAudioUrl.value = null
     }
   }
 

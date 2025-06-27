@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
+      - name: Workaround: install rollup native binding
+        run: npm i @rollup/rollup-linux-x64-gnu
+
       - name: Rebuild native modules
         run: npm rebuild
 

@@ -6,7 +6,18 @@ import AudioUpload from "~/components/Dashboard/AudioUpload.vue"
 import { mockComponent, mockNuxtImport } from "@nuxt/test-utils/runtime"
 import { useTranscriptionStore } from "~/stores/transcription"
 
-// Mock UI components to avoid complex rendering
+mockNuxtImport("useAuth", () => {
+  return () => ({
+    user: { value: { name: "Test User" } },
+    isAuthenticated: { value: true },
+    getIdToken: vi.fn().mockResolvedValue("mock-token"),
+  })
+})
+
+vi.mock("~/utils/config", () => ({
+  API_BASE_URL: "https://s09e6850fd.execute-api.eu-west-1.amazonaws.com",
+}))
+
 mockComponent("UCard", { template: '<div class="u-card"><slot /></div>' })
 mockComponent("UButton", {
   template:
@@ -16,7 +27,6 @@ mockComponent("UButton", {
 mockComponent("UIcon", { template: '<span class="u-icon"></span>' })
 mockComponent("UProgress", { template: '<div class="u-progress"></div>' })
 
-// Mock toast
 const mockToast = {
   add: vi.fn(),
 }

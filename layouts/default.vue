@@ -9,9 +9,11 @@
               name="i-lucide-headphones"
               class="w-8 h-8 mr-1 text-primary translate-y-1"
             />
-            <span class="font-bold text-xl text-gray-900 dark:text-white"
-              >Vocali-dev</span
+            <span
+              class="font-bold text-xs text-gray-900 dark:text-white md:text-xl"
             >
+              Vocali-dev
+            </span>
           </div>
 
           <div class="flex items-center space-x-4">
@@ -47,8 +49,6 @@
               v-if="!isAuthenticated"
               class="hidden md:flex items-center space-x-2"
             >
-              <UButton variant="ghost" size="sm" to="/about">About</UButton>
-              <UButton variant="ghost" size="sm" to="/contact">Contact</UButton>
               <UButton variant="outline" size="sm" to="/auth/login"
                 >Login</UButton
               >
@@ -63,6 +63,7 @@
               <UDropdown
                 :items="userMenuItems"
                 :popper="{ placement: 'bottom-end' }"
+                class="hidden md:block"
               >
                 <UButton variant="ghost" class="flex items-center space-x-2">
                   <UAvatar
@@ -109,15 +110,6 @@
         </div>
 
         <div v-if="!isAuthenticated" class="space-y-2">
-          <UButton
-            variant="ghost"
-            size="sm"
-            block
-            to="/about"
-            @click="isMobileMenuOpen = false"
-          >
-            About
-          </UButton>
           <UButton
             variant="ghost"
             size="sm"
@@ -182,20 +174,8 @@
           <div
             class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400"
           >
-            <NuxtLink
-              to="/about"
-              class="hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              About
-            </NuxtLink>
-            <NuxtLink
-              to="/contact"
-              class="hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              Contact
-            </NuxtLink>
             <a
-              href="https://github.com"
+              href="https://github.com/JSSatorres"
               target="_blank"
               rel="noopener noreferrer"
               class="hover:text-gray-900 dark:hover:text-white transition-colors"

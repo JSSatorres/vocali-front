@@ -1,18 +1,6 @@
 <template>
   <UCard class="hover:shadow-md transition-shadow">
     <div class="flex items-center gap-4">
-      <!-- File Icon -->
-      <div
-        class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-        :class="getIconBackground(transcription.status)"
-      >
-        <UIcon
-          :name="getIcon(transcription.status)"
-          class="w-6 h-6"
-          :class="getIconColor(transcription.status)"
-        />
-      </div>
-
       <!-- Main Content -->
       <div class="flex-1 min-w-0">
         <div class="flex items-start justify-between mb-2">
@@ -108,11 +96,12 @@
           <div class="flex items-center gap-2">
             <UButton
               v-if="transcription.status === 'completed'"
-              @click="$emit('download', transcription)"
+              @click="handleDownload"
               variant="ghost"
               size="xs"
               data-cy="download-button"
               title="Download transcription"
+              :loading="isDownloading"
             >
               <UIcon name="i-lucide-download" class="w-4 h-4" />
             </UButton>
@@ -136,102 +125,69 @@
 
 <script setup lang="ts">
 import type { Transcription } from "~/types/transcription"
-
+import { formatDate, getStatusColor } from "../dashboardsUtils/dashboardsUtils"
 interface Props {
   transcription: Transcription
 }
 
+const toast = useToast()
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  download: [transcription: Transcription]
   delete: [transcription: Transcription]
 }>()
 
-const getIcon = (status: string) => {
-  switch (status) {
-    case "completed":
-      return "i-lucide-file-text"
-    case "processing":
-    case "pending":
-      return "i-lucide-loader"
-    case "failed":
-      return "i-lucide-alert-circle"
-    default:
-      return "i-lucide-file"
-  }
-}
-
-const getIconColor = (status: string) => {
-  switch (status) {
-    case "completed":
-      return "text-green-500"
-    case "processing":
-    case "pending":
-      return "text-amber-500"
-    case "failed":
-      return "text-red-500"
-    default:
-      return "text-gray-500"
-  }
-}
-
-const getIconBackground = (status: string) => {
-  switch (status) {
-    case "completed":
-      return "bg-green-100 dark:bg-green-900/20"
-    case "processing":
-    case "pending":
-      return "bg-amber-100 dark:bg-amber-900/20"
-    case "failed":
-      return "bg-red-100 dark:bg-red-900/20"
-    default:
-      return "bg-gray-100 dark:bg-gray-800"
-  }
-}
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "completed":
-      return "green"
-    case "processing":
-    case "pending":
-      return "amber"
-    case "failed":
-      return "red"
-    default:
-      return "gray"
-  }
-}
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-  if (days === 0) {
-    return "Today"
-  } else if (days === 1) {
-    return "Yesterday"
-  } else if (days < 7) {
-    return `${days} days ago`
-  } else {
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
-    })
-  }
-}
+const isDownloading = ref(false)
 
 const confirmDelete = () => {
-  if (
-    confirm(
-      `Are you sure you want to delete "${props.transcription.filename}"?`
-    )
-  ) {
+  const confirmed = confirm(
+    `Are you sure you want to delete "${props.transcription.filename}"? This action cannot be undone.`
+  )
+  if (confirmed) {
     emit("delete", props.transcription)
+  }
+}
+
+const handleDownload = async () => {
+  const { getIdToken } = useAuth()
+  const token = await getIdToken()
+
+  const API_BASE_URL = useRuntimeConfig().public.API_BASE_URL
+  const url = `${API_BASE_URL}/transcriptions/${props.transcription.id}/download`
+
+  try {
+    isDownloading.value = true
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    if (!res.ok) {
+      throw new Error(`Error al obtener el fichero (${res.status})`)
+    }
+
+    const blob = await res.blob()
+
+    const objectUrl = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = objectUrl
+    a.download = `${props.transcription.filename}-transcription.txt`
+    document.body.appendChild(a)
+    a.click()
+
+    a.remove()
+    URL.revokeObjectURL(objectUrl)
+  } catch (err: any) {
+    toast.add({
+      title: "download failed",
+      icon: "i-lucide-check-circle",
+      color: "red",
+    })
+  } finally {
+    isDownloading.value = false
   }
 }
 </script>
@@ -240,6 +196,7 @@ const confirmDelete = () => {
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

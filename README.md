@@ -1,75 +1,60 @@
-# Nuxt Minimal Starter
+# Vocali Frontend
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Nuxt 3 + Pinia + Tailwind CSS project for authentication and audio transcription.
+
+## Requirements
+
+- Node.js 18+
+- npm 9+
 
 ## Setup
 
-Make sure to install dependencies:
+1. Install dependencies:
 
-```bash
-# npm
-npm install
+   ```sh
+   npm install --legacy-peer-deps
+   ```
 
-# pnpm
-pnpm install
+2. Copy the `.env` file and set your variables:
 
-# yarn
-yarn install
+   ```sh
+   cp .env.example .env
+   # Edit .env with your credentials and endpoints
+   ```
 
-# bun
-bun install
+3. Start the development server:
+
+   ```sh
+   npm run dev
+   ```
+
+4. Open the app in your browser:
+   - [http://localhost:3001](http://localhost:3001)
+
+## Features
+
+- Register and login with AWS Cognito
+- Record and convert audio to MP3 (lamejs, no ffmpeg)
+- Upload MP3 files to the backend
+- Real-time transcription (coming soon)
+
+## Useful Scripts
+
+- `npm run dev` — Development server
+- `npm run build` — Build for production
+- `npm run generate` — Generate static site
+- `npm run lint` — Type and lint check
+
+## Troubleshooting
+
+If you encounter dependency errors during installation (common with some npm versions), use the following command:
+
+```sh
+npm install --legacy-peer-deps
 ```
 
-## Development Server
+This will force npm to resolve dependencies in a way compatible with older peer dependency rules.
 
-Start the development server on `http://localhost:3001`:
+---
 
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+**Made with Nuxt 3, Pinia, Tailwind **

@@ -1,4 +1,5 @@
 import { defineVitestConfig } from "@nuxt/test-utils/config"
+import { fileURLToPath } from "node:url"
 
 export default defineVitestConfig({
   test: {
@@ -11,5 +12,15 @@ export default defineVitestConfig({
       "**/cypress/**",
       "**/.{idea,git,cache,output,temp}/**",
     ],
+    setupFiles: ["./tests/setup.ts"],
+  },
+  resolve: {
+    alias: {
+      "~": fileURLToPath(new URL("./", import.meta.url)),
+      "@": fileURLToPath(new URL("./", import.meta.url)),
+    },
+  },
+  esbuild: {
+    target: "node14",
   },
 })
